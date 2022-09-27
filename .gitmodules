@@ -2,3 +2,6 @@
 	path = JUCE
 	url = https://github.com/juce-framework/JUCE/
 	branch = develop
+[submodule "SimpleBLE"]
+	path = SimpleBLE
+	url = https://github.com/OpenBluetoothToolbox/SimpleBLE.git
