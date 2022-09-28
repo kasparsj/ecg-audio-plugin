@@ -3,27 +3,43 @@
 #include "PluginProcessor.h"
 #include <simpleble/SimpleBLE.h>
 
+using namespace juce;
+
 //==============================================================================
-class AudioPluginAudioProcessorEditor  : public juce::AudioProcessorEditor
+class AudioPluginAudioProcessorEditor  : public AudioProcessorEditor
 {
 public:
+    enum EditorStatus
+    {
+        BLUETOOTH_NOT_ENABLED,
+        NO_BLUETOOTH_ADAPTERS,
+        PERIPHERAL_NOT_CONNECTED,
+        PERIPHERAL_CONNECTED,
+    };
+
     explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
     ~AudioPluginAudioProcessorEditor() override;
 
     //==============================================================================
-    void paint (juce::Graphics&) override;
+    void paint (Graphics&) override;
     void resized() override;
 
-    void startScan();
+    void showConnectDialog();
+    void closeConnectDialog();
+    void disconnectSensor();
 
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     AudioPluginAudioProcessor& processorRef;
 
-    juce::TextButton scanButton;
+    EditorStatus status;
+    TextButton connectButton;
+    bool sensorConnected = false;
+    SafePointer<DialogWindow> dialogWindow;
     std::vector<SimpleBLE::Adapter> adapters;
-    std::vector<SimpleBLE::Peripheral> peripherals;
+    SimpleBLE::Adapter adapter;
+    SimpleBLE::Peripheral peripheral;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };

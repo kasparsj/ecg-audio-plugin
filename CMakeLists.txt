@@ -9,7 +9,7 @@ set(PROJECT_NAME "ECGAudioPlugin")
 
 # Set the plugin formats you'll be building here.
 # Valid formats: AAX Unity VST AU AUv3 Standalone
-set(FORMATS AU VST3 AUv3)
+set(FORMATS AU VST3 AUv3 Standalone)
 
 # Reads in VERSION file and sticks in it CURRENT_VERSION variable
 # Be sure the file has no newlines
@@ -47,10 +47,10 @@ juce_add_plugin("${PROJECT_NAME}"
     # ICON_SMALL ...
     COMPANY_NAME Kaspars Jaudzems
     BUNDLE_ID cc.kaspars.ecg
-    # IS_SYNTH TRUE/FALSE                       # Is this a synth or an effect?
-    # NEEDS_MIDI_INPUT TRUE/FALSE               # Does the plugin need midi input?
-    # NEEDS_MIDI_OUTPUT TRUE/FALSE              # Does the plugin need midi output?
-    # IS_MIDI_EFFECT TRUE/FALSE                 # Is this plugin a MIDI effect?
+    IS_SYNTH TRUE                       # Is this a synth or an effect?
+    NEEDS_MIDI_INPUT FALSE               # Does the plugin need midi input?
+    NEEDS_MIDI_OUTPUT FALSE              # Does the plugin need midi output?
+    IS_MIDI_EFFECT FALSE                 # Is this plugin a MIDI effect?
     # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?
     COPY_PLUGIN_AFTER_BUILD TRUE # On MacOS, plugin will be copied to /Users/you/Library/Audio/Plug-Ins/
     PLUGIN_MANUFACTURER_CODE Jaud               # This has to be one uppercase, rest lower for AU formats
@@ -65,8 +65,10 @@ target_compile_features("${PROJECT_NAME}" PRIVATE cxx_std_20)
 set(SourceFiles
     Source/PluginEditor.h
     Source/PluginProcessor.h
+    Source/DeviceList.h
     Source/PluginEditor.cpp
-    Source/PluginProcessor.cpp)
+    Source/PluginProcessor.cpp
+    Source/DeviceList.cpp)
 target_sources("${PROJECT_NAME}" PRIVATE ${SourceFiles})
 
 # No, we don't want our source buried in extra nested folders
@@ -149,7 +151,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2) # find_package equivalent
 
 # Setup the test executable, again C++ 20 please
-add_executable(Tests ${TestFiles})
+add_executable(Tests ${TestFiles} Source/DeviceList.cpp Source/DeviceList.h)
 target_compile_features(Tests PRIVATE cxx_std_20)
 
 # Our test executable also wants to know about our plugin code...

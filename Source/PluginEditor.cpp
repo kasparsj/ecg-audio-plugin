@@ -1,72 +1,110 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "DeviceList.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
-    juce::ignoreUnused (processorRef);
+    ignoreUnused (processorRef);
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (400, 300);
 
     if (!SimpleBLE::Adapter::bluetooth_enabled()) {
-        std::cout << "Bluetooth is not enabled" << std::endl;
-        return;
+        status = BLUETOOTH_NOT_ENABLED;
     }
+    else {
+        adapters = SimpleBLE::Adapter::get_adapters();
+        if (adapters.empty()) {
+            status = NO_BLUETOOTH_ADAPTERS;
+        }
+        else {
+            // Get the first adapter
+            adapter = adapters[0];
+            status = PERIPHERAL_NOT_CONNECTED;
 
-    addAndMakeVisible(scanButton);
-    scanButton.setButtonText ("Scan");
-    scanButton.onClick = [this]() { startScan(); };
-
-    adapters = SimpleBLE::Adapter::get_adapters();
+            addAndMakeVisible(connectButton);
+            connectButton.setButtonText ("Connect Sensor");
+            connectButton.onClick = [this]() {
+                if (!sensorConnected) {
+                    showConnectDialog();
+                }
+                else {
+                    disconnectSensor();
+                }
+            };
+        }
+    }
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+    closeConnectDialog();
 }
 
 //==============================================================================
-void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
+void AudioPluginAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
 
-    g.setColour (juce::Colours::white);
+    g.setColour (Colours::white);
     g.setFont (15.0f);
 
-    juce::String text = "";
-    if (adapters.empty()) {
-        text = "No Bluetooth adapters found";
+    String text = "";
+    switch (status) {
+        case BLUETOOTH_NOT_ENABLED:
+            text = "Bluetooth is not enabled";
+            break;
+        case NO_BLUETOOTH_ADAPTERS:
+            text = "No Bluetooth adapters found";
+            break;
     }
-    else {
-        for (int i=0; i<adapters.size(); i++) {
-            text += juce::String("Adapter identifier: " + adapters[i].identifier() + " address: " + adapters[i].address() + "\r\n");
-        }
-        for (auto peripheral : peripherals) {
-            text += juce::String("Peripheral identifier: " + peripheral.identifier() + " address: " + peripheral.address() + "\r\n");
-        }
-    }
-    g.drawFittedText (text, getLocalBounds(), juce::Justification::centred, 4);
+    g.drawFittedText (text, getLocalBounds(), Justification::centred, 4);
 }
 
 void AudioPluginAudioProcessorEditor::resized()
 {
     auto area = getLocalBounds();
     area.reduce (40, 30);
-    scanButton.setBounds (area.removeFromTop (35).reduced (100, 0));
+    connectButton.setBounds (area.removeFromTop (35).reduced (100, 0));
 }
 
-void AudioPluginAudioProcessorEditor::startScan()
+void AudioPluginAudioProcessorEditor::showConnectDialog()
 {
-    // Get the first adapter
-    SimpleBLE::Adapter adapter = adapters[0];
+    DialogWindow::LaunchOptions options;
+    options.content.setOwned (new DeviceList(adapter, [this](SimpleBLE::Peripheral connected) {
+        peripheral = connected;
+        status = PERIPHERAL_CONNECTED;
+        closeConnectDialog();
+    }));
 
-    // Scan for peripherals for 5000 milliseconds
-    adapter.scan_for(5000);
+    Rectangle<int> area (0, 0, 300, 200);
 
-    // Get the list of peripherals found
-    peripherals = adapter.scan_get_results();
+    options.content->setSize (area.getWidth(), area.getHeight());
 
-    repaint();
+    options.dialogTitle                   = "Connect Sensor";
+    options.dialogBackgroundColour        = Colour (0xff0e345a);
+    options.escapeKeyTriggersCloseButton  = true;
+    options.useNativeTitleBar             = false;
+    options.resizable                     = false;
+
+    dialogWindow = options.launchAsync();
+
+    if (dialogWindow != nullptr)
+        dialogWindow->centreWithSize (300, 200);
+}
+
+void AudioPluginAudioProcessorEditor::closeConnectDialog()
+{
+    if (dialogWindow != nullptr)
+    {
+        dialogWindow->exitModalState (0);
+        delete dialogWindow;
+    }
+}
+
+void AudioPluginAudioProcessorEditor::disconnectSensor() {
+
 }
