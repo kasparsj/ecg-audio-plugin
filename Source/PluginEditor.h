@@ -1,12 +1,12 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include <simpleble/SimpleBLE.h>
+#include "BLEOwner.h"
 
 using namespace juce;
 
 //==============================================================================
-class AudioPluginAudioProcessorEditor  : public AudioProcessorEditor
+class AudioPluginAudioProcessorEditor  : public AudioProcessorEditor, public BLEOwner
 {
 public:
     enum EditorStatus
@@ -28,6 +28,13 @@ public:
     void closeConnectDialog();
     void disconnectSensor();
 
+    void setPeripheral(SimpleBLE::Peripheral &newPeripheral) override {
+        peripheral = newPeripheral;
+        status = PERIPHERAL_CONNECTED;
+        closeConnectDialog();
+        repaint();
+    }
+
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
@@ -38,8 +45,7 @@ private:
     bool sensorConnected = false;
     SafePointer<DialogWindow> dialogWindow;
     std::vector<SimpleBLE::Adapter> adapters;
-    SimpleBLE::Adapter adapter;
-    SimpleBLE::Peripheral peripheral;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };

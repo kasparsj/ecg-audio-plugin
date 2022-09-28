@@ -2,7 +2,7 @@
 
 #include <utility>
 
-DeviceList::DeviceList(SimpleBLE::Adapter &adapter, std::function<void(SimpleBLE::Peripheral)> callback) : adapter(adapter), callback(std::move(callback)) {
+DeviceList::DeviceList(BLEOwner &owner) : owner(owner) {
     setSize(300, 200);
 
     addAndMakeVisible (table);
@@ -24,6 +24,11 @@ DeviceList::DeviceList(SimpleBLE::Adapter &adapter, std::function<void(SimpleBLE
         TableHeaderComponent::notSortable);
     table.setMultipleSelectionEnabled (false);
 
+    startScan();
+}
+
+void DeviceList::startScan() {
+    SimpleBLE::Adapter &adapter = owner.getAdapter();
     adapter.set_callback_on_scan_start([this]() {
         isScanning = true;
         table.updateContent();
@@ -49,9 +54,19 @@ DeviceList::DeviceList(SimpleBLE::Adapter &adapter, std::function<void(SimpleBLE
     startTimer(20000);
 }
 
+void DeviceList::stopScan()
+{
+    SimpleBLE::Adapter &adapter = owner.getAdapter();
+    adapter.scan_stop();
+    adapter.set_callback_on_scan_start(nullptr);
+    adapter.set_callback_on_scan_stop(nullptr);
+    adapter.set_callback_on_scan_found(nullptr);
+    adapter.set_callback_on_scan_updated(nullptr);
+}
+
 void DeviceList::timerCallback() {
     stopTimer();
-    adapter.scan_stop();
+    stopScan();
 }
 
 void DeviceList::resized()
@@ -63,5 +78,7 @@ void DeviceList::connect (int rowNumber)
 {
     SimpleBLE::Peripheral peripheral = peripherals[rowNumber - (isScanning ? 1 : 0)];
     peripheral.connect();
-    callback(peripheral);
+    connectedTo = rowNumber;
+    table.updateContent();
+    owner.setPeripheral(peripheral);
 }

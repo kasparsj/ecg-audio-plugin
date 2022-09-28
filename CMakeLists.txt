@@ -151,7 +151,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2) # find_package equivalent
 
 # Setup the test executable, again C++ 20 please
-add_executable(Tests ${TestFiles} Source/DeviceList.cpp Source/DeviceList.h)
+add_executable(Tests ${TestFiles} Source/DeviceList.cpp Source/DeviceList.h Source/BLEOwner.cpp Source/BLEOwner.h)
 target_compile_features(Tests PRIVATE cxx_std_20)
 
 # Our test executable also wants to know about our plugin code...

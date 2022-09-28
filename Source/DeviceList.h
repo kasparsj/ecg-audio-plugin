@@ -1,29 +1,39 @@
 #pragma once
 
 #include "juce_gui_basics/juce_gui_basics.h"
-#include <simpleble/SimpleBLE.h>
+#include "BLEOwner.h"
 
 using namespace juce;
 
 class DeviceList : public Component, private TableListBoxModel, public Timer
 {
 public:
-    DeviceList(SimpleBLE::Adapter &adapter, std::function<void(SimpleBLE::Peripheral)> callback);
+    DeviceList(BLEOwner &owner);
+    ~DeviceList() {
+        stopScan();
+    }
 
+    void startScan();
+    void stopScan();
     void timerCallback() override;
     void resized() override;
     void connect(int rowNumber);
+    int getConnectedTo() { return connectedTo; }
 
 private:
     std::function<void(SimpleBLE::Peripheral)> callback;
     TableListBox table;
     Font font           { 14.0f };
     bool isScanning;
-    SimpleBLE::Adapter &adapter;
+    int connectedTo = -1;
+    BLEOwner &owner;
     std::vector<SimpleBLE::Peripheral> peripherals;
 
     int getNumRows() override
     {
+        if (connectedTo > -1) {
+            return 0;
+        }
         return (isScanning ? 1 : 0) + peripherals.size();
     }
 
@@ -40,22 +50,22 @@ private:
     void paintCell (juce::Graphics& g, int rowNumber, int columnId,
         int width, int height, bool rowIsSelected) override
     {
-        g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));  // [5]
+        g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
         g.setFont (font);
 
         if (isScanning && rowNumber == 0) {
             if (columnId == 1) {
-                g.drawText ("Scanning...", 2, 0, width - 4, height, juce::Justification::centredLeft, true);                             // [6]
+                g.drawText ("Scanning...", 2, 0, width - 4, height, juce::Justification::centredLeft, true);
                 g.setColour (getLookAndFeel().findColour (juce::ListBox::backgroundColourId));
-                g.fillRect (width - 1, 0, 1, height);                                                                               // [7]
+                g.fillRect (width - 1, 0, 1, height);
             }
         }
         else {
             if (columnId == 1) {
                 SimpleBLE::Peripheral& peripheral = peripherals.at (rowNumber - (isScanning ? 1 : 0));
-                g.drawText (peripheral.identifier(), 2, 0, width - 4, height, juce::Justification::centredLeft, true);                             // [6]
+                g.drawText (peripheral.identifier(), 2, 0, width - 4, height, juce::Justification::centredLeft, true);
                 g.setColour (getLookAndFeel().findColour (juce::ListBox::backgroundColourId));
-                g.fillRect (width - 1, 0, 1, height);                                                                               // [7]
+                g.fillRect (width - 1, 0, 1, height);
             }
         }
     }
@@ -88,6 +98,10 @@ private:
         {
             row = newRow;
             columnId = newColumn;
+
+            if (row == owner.getConnectedTo()) {
+                connectButton.setButtonText ("Connected");
+            }
         }
     private:
         DeviceList& owner;
@@ -98,7 +112,7 @@ private:
     Component* refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/,
         Component* existingComponentToUpdate) override
     {
-        if ((!isScanning || rowNumber > 1) && columnId == 2)
+        if ((!isScanning || rowNumber > 0) && columnId == 2)
         {
             auto* connectComp = static_cast<ConnectColumnComponent*> (existingComponentToUpdate);
 

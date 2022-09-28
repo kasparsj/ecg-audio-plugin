@@ -62,6 +62,13 @@ void AudioPluginAudioProcessorEditor::paint (Graphics& g)
             break;
     }
     g.drawFittedText (text, getLocalBounds(), Justification::centred, 4);
+
+    if (status == PERIPHERAL_NOT_CONNECTED) {
+        connectButton.setButtonText ("Connect Sensor");
+    }
+    else if (status == PERIPHERAL_CONNECTED) {
+        connectButton.setButtonText ("Sensor Connected");
+    }
 }
 
 void AudioPluginAudioProcessorEditor::resized()
@@ -74,11 +81,7 @@ void AudioPluginAudioProcessorEditor::resized()
 void AudioPluginAudioProcessorEditor::showConnectDialog()
 {
     DialogWindow::LaunchOptions options;
-    options.content.setOwned (new DeviceList(adapter, [this](SimpleBLE::Peripheral connected) {
-        peripheral = connected;
-        status = PERIPHERAL_CONNECTED;
-        closeConnectDialog();
-    }));
+    options.content.setOwned (new DeviceList(*this));
 
     Rectangle<int> area (0, 0, 300, 200);
 
@@ -102,6 +105,7 @@ void AudioPluginAudioProcessorEditor::closeConnectDialog()
     {
         dialogWindow->exitModalState (0);
         delete dialogWindow;
+        dialogWindow = nullptr;
     }
 }
 
