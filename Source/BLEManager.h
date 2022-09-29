@@ -18,16 +18,26 @@ public:
     std::vector<SimpleBLE::Peripheral>& getPeripherals() {
         return peripherals;
     }
-    SimpleBLE::Peripheral& getPeripheral() { return peripherals[connectedIndex]; }
-    virtual void setConnectedIndex(int i) {
-        if (i != connectedIndex && connectedIndex >= 0 && peripherals[connectedIndex].is_connected()) {
-            peripherals[connectedIndex].disconnect();
+    SimpleBLE::Peripheral& getActivePeripheral() { return peripherals[activeIndex]; }
+    virtual void setActiveIndex (int i) {
+        if (i != activeIndex && activeIndex >= 0 && peripherals[activeIndex].is_connected()) {
+            peripherals[activeIndex].disconnect();
         }
-        connectedIndex = i;
+        activeIndex = i;
+        if (activeIndex >= 0) {
+            peripherals[activeIndex].connect();
+        }
+    }
+
+    void startScan();
+    void stopScan();
+    bool getIsScanning() {
+        return isScanning;
     }
 
 protected:
     SimpleBLE::Adapter adapter;
     std::vector<SimpleBLE::Peripheral> peripherals;
-    int connectedIndex = -1;
+    int activeIndex = -1;
+    bool isScanning;
 };

@@ -68,9 +68,13 @@ set(SourceFiles
     Source/PluginEditor.h
     Source/PluginProcessor.h
     Source/DeviceList.h
+    Source/BLEManager.h
+    Source/ModalWindow.h
     Source/PluginEditor.cpp
     Source/PluginProcessor.cpp
-    Source/DeviceList.cpp)
+    Source/DeviceList.cpp
+    Source/BLEManager.cpp
+    Source/ModalWindow.cpp)
 target_sources("${PROJECT_NAME}" PRIVATE ${SourceFiles})
 
 # No, we don't want our source buried in extra nested folders
@@ -153,7 +157,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2) # find_package equivalent
 
 # Setup the test executable, again C++ 20 please
-add_executable(Tests ${TestFiles} Source/DeviceList.cpp Source/DeviceList.h Source/BLEManager.cpp Source/BLEManager.h)
+add_executable(Tests ${TestFiles} Source/DeviceList.cpp Source/DeviceList.h Source/BLEManager.cpp Source/BLEManager.h Source/ModalWindow.cpp Source/ModalWindow.h)
 target_compile_features(Tests PRIVATE cxx_std_20)
 
 # Our test executable also wants to know about our plugin code...

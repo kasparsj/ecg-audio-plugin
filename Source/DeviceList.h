@@ -9,29 +9,22 @@ class DeviceList : public Component, private TableListBoxModel, public Timer
 {
 public:
     DeviceList(BLEManager&owner);
-    ~DeviceList() {
-        stopScan();
-    }
 
-    void startScan();
-    void stopScan();
     void timerCallback() override;
     void resized() override;
-    void onConnected(int rowNumber);
+    void setConnecting(int rowNumber);
     SimpleBLE::Peripheral &getPeripheral(int rowNumber) {
-        return owner.getPeripherals()[rowNumber - (isScanning ? 1 : 0)];
+        return owner.getPeripherals()[rowNumber - (owner.getIsScanning() ? 1 : 0)];
     }
-    void setIsFinished() {
-        isFinished = true;
+    void setModelToNull() {
+        table.setModel(nullptr);
     }
 
 private:
     std::function<void(SimpleBLE::Peripheral)> callback;
     TableListBox table;
     Font font           { 14.0f };
-    bool isScanning;
     BLEManager& owner;
-    bool isFinished;
 
     int getNumRows() override;
 
@@ -51,7 +44,7 @@ private:
         g.setColour (rowIsSelected ? Colours::darkblue : getLookAndFeel().findColour (ListBox::textColourId));
         g.setFont (font);
 
-        if (isScanning && rowNumber == 0) {
+        if (owner.getIsScanning() && rowNumber == 0) {
             if (columnId == 1) {
                 g.drawText ("Scanning...", 2, 0, width - 4, height, Justification::centredLeft, true);
                 g.setColour (getLookAndFeel().findColour (ListBox::backgroundColourId));
@@ -98,17 +91,10 @@ private:
             connectButton.onClick = [this] {
                 SimpleBLE::Peripheral& peripheral = owner.getPeripheral(row);
                 if (peripheral.is_connected()) {
-                    peripheral.disconnect();
-                    owner.onConnected(-1);
+                    owner.setConnecting(-1);
                 }
                 else {
-                    try {
-                        peripheral.connect();
-                    }
-                    catch (...) {
-
-                    }
-                    owner.onConnected(row);
+                    owner.setConnecting(row);
                 }
             };
         }

@@ -3,6 +3,7 @@
 #include "BLEManager.h"
 #include "PluginProcessor.h"
 #include "DeviceList.h"
+#include "ModalWindow.h"
 
 using namespace juce;
 
@@ -27,8 +28,9 @@ public:
 
     void showConnectDialog();
     void closeConnectDialog();
+    void dialogClosing();
 
-    void setConnectedIndex(int i) override;
+    void setActiveIndex (int i) override;
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -38,9 +40,10 @@ private:
     EditorStatus status;
     TextButton connectButton;
     bool sensorConnected = false;
-    SafePointer<DialogWindow> dialogWindow;
+    SafePointer<ModalWindow> dialogWindow;
     std::vector<SimpleBLE::Adapter> adapters;
     DeviceList *deviceList = 0;
+    int hr = 0;
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)

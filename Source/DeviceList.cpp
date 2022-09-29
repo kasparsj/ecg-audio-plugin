@@ -24,55 +24,11 @@ DeviceList::DeviceList(BLEManager&owner) : owner(owner) {
         TableHeaderComponent::notSortable);
     table.setMultipleSelectionEnabled (false);
 
-    startScan();
-}
-
-void DeviceList::startScan() {
-    SimpleBLE::Adapter &adapter = owner.getAdapter();
-    adapter.set_callback_on_scan_start([this]() {
-        isScanning = true;
-
-        const MessageManagerLock mmLock;
-        table.updateContent();
-    });
-    adapter.set_callback_on_scan_stop([this]() {
-        isScanning = false;
-
-        const MessageManagerLock mmLock;
-        table.updateContent();
-    });
-    adapter.set_callback_on_scan_found([this](SimpleBLE::Peripheral peripheral) {
-        if (peripheral.identifier().size() > 0) {
-            owner.addPeripheral(peripheral);
-
-            const MessageManagerLock mmLock;
-            table.updateContent();
-        }
-    });
-    adapter.set_callback_on_scan_updated([this](SimpleBLE::Peripheral peripheral) {
-        owner.addPeripheral(peripheral);
-
-        const MessageManagerLock mmLock;
-        table.updateContent();
-    });
-    adapter.scan_start();
-
-    startTimer(20000);
-}
-
-void DeviceList::stopScan()
-{
-    SimpleBLE::Adapter &adapter = owner.getAdapter();
-    adapter.scan_stop();
-    adapter.set_callback_on_scan_start(nullptr);
-    adapter.set_callback_on_scan_stop(nullptr);
-    adapter.set_callback_on_scan_found(nullptr);
-    adapter.set_callback_on_scan_updated(nullptr);
+    startTimer(1000);
 }
 
 void DeviceList::timerCallback() {
-    stopTimer();
-    stopScan();
+    table.updateContent();
 }
 
 void DeviceList::resized()
@@ -80,22 +36,19 @@ void DeviceList::resized()
     table.setBoundsInset (BorderSize<int> (10));
 }
 
-void DeviceList::onConnected(int rowNumber)
+void DeviceList::setConnecting(int rowNumber)
 {
-    owner.setConnectedIndex(rowNumber - (isScanning ? 1 : 0));
+    owner.setActiveIndex (rowNumber - (owner.getIsScanning() ? 1 : 0));
 }
 
 int DeviceList::getNumRows()
 {
-    if (isFinished) {
-        return 0;
-    }
-    return (isScanning ? 1 : 0) + owner.getPeripherals().size();
+    return (owner.getIsScanning() ? 1 : 0) + owner.getPeripherals().size();
 }
 
 Component* DeviceList::refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/, Component* existingComponentToUpdate)
 {
-    if ((!isScanning || rowNumber > 0) && columnId == 2)
+    if ((!owner.getIsScanning() || rowNumber > 0) && columnId == 2)
     {
         auto* connectComp = static_cast<ConnectColumnComponent*> (existingComponentToUpdate);
 
@@ -104,6 +57,10 @@ Component* DeviceList::refreshComponentForCell (int rowNumber, int columnId, boo
 
         connectComp->setRowAndColumn (rowNumber, columnId);
         return connectComp;
+    }
+    else if (existingComponentToUpdate != nullptr) {
+        delete existingComponentToUpdate;
+        existingComponentToUpdate = nullptr;
     }
 
     jassert (existingComponentToUpdate == nullptr);
