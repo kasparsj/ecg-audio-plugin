@@ -1,14 +1,14 @@
 #pragma once
 
+#include "BLEManager.h"
 #include "juce_gui_basics/juce_gui_basics.h"
-#include "BLEOwner.h"
 
 using namespace juce;
 
 class DeviceList : public Component, private TableListBoxModel, public Timer
 {
 public:
-    DeviceList(BLEOwner &owner);
+    DeviceList(BLEManager&owner);
     ~DeviceList() {
         stopScan();
     }
@@ -17,17 +17,21 @@ public:
     void stopScan();
     void timerCallback() override;
     void resized() override;
-    void connect(int rowNumber);
-    int getConnectedTo() { return connectedTo; }
+    void onConnected(int rowNumber);
+    SimpleBLE::Peripheral &getPeripheral(int rowNumber) {
+        return owner.getPeripherals()[rowNumber - (isScanning ? 1 : 0)];
+    }
+    void setIsFinished() {
+        isFinished = true;
+    }
 
 private:
     std::function<void(SimpleBLE::Peripheral)> callback;
     TableListBox table;
     Font font           { 14.0f };
     bool isScanning;
-    int connectedTo = -1;
-    BLEOwner &owner;
-    std::vector<SimpleBLE::Peripheral> peripherals;
+    BLEManager& owner;
+    bool isFinished;
 
     int getNumRows() override;
 
@@ -56,7 +60,7 @@ private:
         }
         else {
             if (columnId == 1) {
-                SimpleBLE::Peripheral& peripheral = peripherals.at (rowNumber - (isScanning ? 1 : 0));
+                SimpleBLE::Peripheral& peripheral = getPeripheral(rowNumber);
                 g.drawText (peripheral.identifier(), 2, 0, width - 4, height, Justification::centredLeft, true);
                 g.setColour (getLookAndFeel().findColour (ListBox::backgroundColourId));
                 g.fillRect (width - 1, 0, 1, height);
@@ -75,15 +79,8 @@ private:
     class ConnectColumnComponent  : public Component
     {
     public:
-        ConnectColumnComponent (DeviceList& td)
-            : owner (td)
-        {
+        ConnectColumnComponent (DeviceList& td) : owner (td) {
             addAndMakeVisible (connectButton);
-            connectButton.setButtonText ("Connect");
-
-            connectButton.onClick = [this] {
-                owner.connect(row);
-            };
         }
 
         void resized() override
@@ -96,14 +93,40 @@ private:
             row = newRow;
             columnId = newColumn;
 
-            if (row == owner.getConnectedTo()) {
-                connectButton.setButtonText ("Connected");
-            }
+            updateButton();
+
+            connectButton.onClick = [this] {
+                SimpleBLE::Peripheral& peripheral = owner.getPeripheral(row);
+                if (peripheral.is_connected()) {
+                    peripheral.disconnect();
+                    owner.onConnected(-1);
+                }
+                else {
+                    try {
+                        peripheral.connect();
+                    }
+                    catch (...) {
+
+                    }
+                    owner.onConnected(row);
+                }
+            };
         }
     private:
         DeviceList& owner;
         TextButton connectButton;
         int row, columnId;
+
+        void updateButton() {
+            if (owner.getPeripheral(row).is_connected()) {
+                connectButton.setButtonText ("Disconnect");
+            }
+            else {
+                connectButton.setButtonText ("Connect");
+            }
+        }
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ConnectColumnComponent)
     };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DeviceList)

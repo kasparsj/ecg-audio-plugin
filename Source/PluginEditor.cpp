@@ -1,6 +1,5 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "DeviceList.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -27,12 +26,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             addAndMakeVisible(connectButton);
             connectButton.setButtonText ("Connect Sensor");
             connectButton.onClick = [this]() {
-                if (!sensorConnected) {
-                    showConnectDialog();
-                }
-                else {
-                    disconnectSensor();
-                }
+                showConnectDialog();
             };
         }
     }
@@ -80,7 +74,7 @@ void AudioPluginAudioProcessorEditor::resized()
 void AudioPluginAudioProcessorEditor::showConnectDialog()
 {
     DialogWindow::LaunchOptions options;
-    options.content.setOwned (new DeviceList(*this));
+    options.content.setOwned (deviceList = new DeviceList(*this));
 
     Rectangle<int> area (0, 0, 300, 200);
 
@@ -103,18 +97,28 @@ void AudioPluginAudioProcessorEditor::closeConnectDialog()
     if (dialogWindow != nullptr)
     {
         dialogWindow->exitModalState (0);
+        // JUCE will throw exception on delete dialogWindow if TableListBox has any rows
+        if (deviceList != nullptr) {
+            deviceList->setIsFinished();
+        }
         delete dialogWindow;
         dialogWindow = nullptr;
+        deviceList = nullptr;
     }
 }
 
-void AudioPluginAudioProcessorEditor::disconnectSensor() {
-
-}
-
-void AudioPluginAudioProcessorEditor::setPeripheral(SimpleBLE::Peripheral &newPeripheral) {
-    peripheral = newPeripheral;
-    status = PERIPHERAL_CONNECTED;
-    closeConnectDialog();
-    repaint();
+void AudioPluginAudioProcessorEditor::setConnectedIndex(int i) {
+    if (i >= 0 || connectedIndex < 0 || !peripherals[connectedIndex].is_connected()) {
+        BLEManager::setConnectedIndex(i);
+    }
+    status = connectedIndex >= 0 && peripherals[connectedIndex].is_connected() ? PERIPHERAL_CONNECTED : PERIPHERAL_NOT_CONNECTED;
+    if (status == PERIPHERAL_CONNECTED) {
+        connectButton.setColour(TextButton::ColourIds::buttonColourId, Colours::green);
+    }
+    else {
+        connectButton.setColour(TextButton::ColourIds::buttonColourId, getLookAndFeel().findColour (TextButton::buttonColourId));
+    }
+    if (i >= 0) {
+        closeConnectDialog();
+    }
 }

@@ -1,12 +1,13 @@
 #pragma once
 
+#include "BLEManager.h"
 #include "PluginProcessor.h"
-#include "BLEOwner.h"
+#include "DeviceList.h"
 
 using namespace juce;
 
 //==============================================================================
-class AudioPluginAudioProcessorEditor  : public AudioProcessorEditor, public BLEOwner
+class AudioPluginAudioProcessorEditor  : public AudioProcessorEditor, public BLEManager
 {
 public:
     enum EditorStatus
@@ -26,9 +27,8 @@ public:
 
     void showConnectDialog();
     void closeConnectDialog();
-    void disconnectSensor();
 
-    void setPeripheral(SimpleBLE::Peripheral &newPeripheral) override;
+    void setConnectedIndex(int i) override;
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -40,6 +40,7 @@ private:
     bool sensorConnected = false;
     SafePointer<DialogWindow> dialogWindow;
     std::vector<SimpleBLE::Adapter> adapters;
+    DeviceList *deviceList = 0;
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)

@@ -2,7 +2,7 @@
 
 #include <utility>
 
-DeviceList::DeviceList(BLEOwner &owner) : owner(owner) {
+DeviceList::DeviceList(BLEManager&owner) : owner(owner) {
     setSize(300, 200);
 
     addAndMakeVisible (table);
@@ -43,18 +43,14 @@ void DeviceList::startScan() {
     });
     adapter.set_callback_on_scan_found([this](SimpleBLE::Peripheral peripheral) {
         if (peripheral.identifier().size() > 0) {
-            peripherals.push_back(peripheral);
+            owner.addPeripheral(peripheral);
 
             const MessageManagerLock mmLock;
             table.updateContent();
         }
     });
     adapter.set_callback_on_scan_updated([this](SimpleBLE::Peripheral peripheral) {
-        for (int i=0; i<peripherals.size(); i++) {
-            if (peripherals[i].identifier() == peripheral.identifier()) {
-                peripherals[i] = peripheral;
-            }
-        }
+        owner.addPeripheral(peripheral);
 
         const MessageManagerLock mmLock;
         table.updateContent();
@@ -84,21 +80,17 @@ void DeviceList::resized()
     table.setBoundsInset (BorderSize<int> (10));
 }
 
-void DeviceList::connect (int rowNumber)
+void DeviceList::onConnected(int rowNumber)
 {
-    SimpleBLE::Peripheral peripheral = peripherals[rowNumber - (isScanning ? 1 : 0)];
-    peripheral.connect();
-    connectedTo = rowNumber;
-    table.updateContent();
-    owner.setPeripheral(peripheral);
+    owner.setConnectedIndex(rowNumber - (isScanning ? 1 : 0));
 }
 
 int DeviceList::getNumRows()
 {
-    if (connectedTo > -1) {
+    if (isFinished) {
         return 0;
     }
-    return (isScanning ? 1 : 0) + peripherals.size();
+    return (isScanning ? 1 : 0) + owner.getPeripherals().size();
 }
 
 Component* DeviceList::refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/, Component* existingComponentToUpdate)
