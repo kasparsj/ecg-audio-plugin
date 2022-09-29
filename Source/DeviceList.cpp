@@ -11,14 +11,14 @@ DeviceList::DeviceList(BLEOwner &owner) : owner(owner) {
     table.setOutlineThickness (1);
     table.getHeader().addColumn ("Devices",
         1,
-        200,
+        196,
         50,
-        200,
+        196,
         TableHeaderComponent::notSortable);
 
     table.getHeader().addColumn ("",
         2,
-        100,
+        80,
         50,
         100,
         TableHeaderComponent::notSortable);
@@ -31,15 +31,23 @@ void DeviceList::startScan() {
     SimpleBLE::Adapter &adapter = owner.getAdapter();
     adapter.set_callback_on_scan_start([this]() {
         isScanning = true;
+
+        const MessageManagerLock mmLock;
         table.updateContent();
     });
     adapter.set_callback_on_scan_stop([this]() {
         isScanning = false;
+
+        const MessageManagerLock mmLock;
         table.updateContent();
     });
     adapter.set_callback_on_scan_found([this](SimpleBLE::Peripheral peripheral) {
-        peripherals.push_back(peripheral);
-        table.updateContent();
+        if (peripheral.identifier().size() > 0) {
+            peripherals.push_back(peripheral);
+
+            const MessageManagerLock mmLock;
+            table.updateContent();
+        }
     });
     adapter.set_callback_on_scan_updated([this](SimpleBLE::Peripheral peripheral) {
         for (int i=0; i<peripherals.size(); i++) {
@@ -47,6 +55,8 @@ void DeviceList::startScan() {
                 peripherals[i] = peripheral;
             }
         }
+
+        const MessageManagerLock mmLock;
         table.updateContent();
     });
     adapter.scan_start();
@@ -71,7 +81,7 @@ void DeviceList::timerCallback() {
 
 void DeviceList::resized()
 {
-    table.setBoundsInset (BorderSize<int> (0));
+    table.setBoundsInset (BorderSize<int> (10));
 }
 
 void DeviceList::connect (int rowNumber)
@@ -81,4 +91,40 @@ void DeviceList::connect (int rowNumber)
     connectedTo = rowNumber;
     table.updateContent();
     owner.setPeripheral(peripheral);
+}
+
+int DeviceList::getNumRows()
+{
+    if (connectedTo > -1) {
+        return 0;
+    }
+    return (isScanning ? 1 : 0) + peripherals.size();
+}
+
+Component* DeviceList::refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/, Component* existingComponentToUpdate)
+{
+    if ((!isScanning || rowNumber > 0) && columnId == 2)
+    {
+        auto* connectComp = static_cast<ConnectColumnComponent*> (existingComponentToUpdate);
+
+        if (connectComp == nullptr)
+            connectComp = new ConnectColumnComponent (*this);
+
+        connectComp->setRowAndColumn (rowNumber, columnId);
+        return connectComp;
+    }
+
+    jassert (existingComponentToUpdate == nullptr);
+    return nullptr;
+}
+
+int DeviceList::getColumnAutoSizeWidth (int columnId)
+{
+    switch (columnId) {
+        case 1:
+            return 196;
+        case 2:
+        default:
+            return 80;
+    }
 }

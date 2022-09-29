@@ -73,9 +73,8 @@ void AudioPluginAudioProcessorEditor::paint (Graphics& g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    auto area = getLocalBounds();
-    area.reduce (40, 30);
-    connectButton.setBounds (area.removeFromTop (35).reduced (100, 0));
+    connectButton.setTopRightPosition (20, 15);
+    connectButton.setSize(200, 30);
 }
 
 void AudioPluginAudioProcessorEditor::showConnectDialog()
@@ -88,7 +87,7 @@ void AudioPluginAudioProcessorEditor::showConnectDialog()
     options.content->setSize (area.getWidth(), area.getHeight());
 
     options.dialogTitle                   = "Connect Sensor";
-    options.dialogBackgroundColour        = Colour (0xff0e345a);
+    options.dialogBackgroundColour        = getLookAndFeel().findColour (ResizableWindow::backgroundColourId);
     options.escapeKeyTriggersCloseButton  = true;
     options.useNativeTitleBar             = false;
     options.resizable                     = false;
@@ -111,4 +110,11 @@ void AudioPluginAudioProcessorEditor::closeConnectDialog()
 
 void AudioPluginAudioProcessorEditor::disconnectSensor() {
 
+}
+
+void AudioPluginAudioProcessorEditor::setPeripheral(SimpleBLE::Peripheral &newPeripheral) {
+    peripheral = newPeripheral;
+    status = PERIPHERAL_CONNECTED;
+    closeConnectDialog();
+    repaint();
 }

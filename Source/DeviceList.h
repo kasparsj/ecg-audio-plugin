@@ -29,42 +29,36 @@ private:
     BLEOwner &owner;
     std::vector<SimpleBLE::Peripheral> peripherals;
 
-    int getNumRows() override
-    {
-        if (connectedTo > -1) {
-            return 0;
-        }
-        return (isScanning ? 1 : 0) + peripherals.size();
-    }
+    int getNumRows() override;
 
-    void paintRowBackground (juce::Graphics& g, int rowNumber, int /*width*/, int /*height*/, bool rowIsSelected) override
+    void paintRowBackground (Graphics& g, int rowNumber, int /*width*/, int /*height*/, bool rowIsSelected) override
     {
-        auto alternateColour = getLookAndFeel().findColour (juce::ListBox::backgroundColourId)
-                                   .interpolatedWith (getLookAndFeel().findColour (juce::ListBox::textColourId), 0.03f);
+        auto alternateColour = getLookAndFeel().findColour (ListBox::backgroundColourId)
+                                   .interpolatedWith (getLookAndFeel().findColour (ListBox::textColourId), 0.03f);
         if (rowIsSelected)
-            g.fillAll (juce::Colours::lightblue);
+            g.fillAll (Colours::lightblue);
         else if (rowNumber % 2)
             g.fillAll (alternateColour);
     }
 
-    void paintCell (juce::Graphics& g, int rowNumber, int columnId,
+    void paintCell (Graphics& g, int rowNumber, int columnId,
         int width, int height, bool rowIsSelected) override
     {
-        g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
+        g.setColour (rowIsSelected ? Colours::darkblue : getLookAndFeel().findColour (ListBox::textColourId));
         g.setFont (font);
 
         if (isScanning && rowNumber == 0) {
             if (columnId == 1) {
-                g.drawText ("Scanning...", 2, 0, width - 4, height, juce::Justification::centredLeft, true);
-                g.setColour (getLookAndFeel().findColour (juce::ListBox::backgroundColourId));
+                g.drawText ("Scanning...", 2, 0, width - 4, height, Justification::centredLeft, true);
+                g.setColour (getLookAndFeel().findColour (ListBox::backgroundColourId));
                 g.fillRect (width - 1, 0, 1, height);
             }
         }
         else {
             if (columnId == 1) {
                 SimpleBLE::Peripheral& peripheral = peripherals.at (rowNumber - (isScanning ? 1 : 0));
-                g.drawText (peripheral.identifier(), 2, 0, width - 4, height, juce::Justification::centredLeft, true);
-                g.setColour (getLookAndFeel().findColour (juce::ListBox::backgroundColourId));
+                g.drawText (peripheral.identifier(), 2, 0, width - 4, height, Justification::centredLeft, true);
+                g.setColour (getLookAndFeel().findColour (ListBox::backgroundColourId));
                 g.fillRect (width - 1, 0, 1, height);
             }
         }
@@ -74,6 +68,9 @@ private:
     {
         table.updateContent();
     }
+
+    Component* refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/, Component* existingComponentToUpdate) override;
+    int getColumnAutoSizeWidth (int columnId) override;
 
     class ConnectColumnComponent  : public Component
     {
@@ -108,35 +105,6 @@ private:
         TextButton connectButton;
         int row, columnId;
     };
-
-    Component* refreshComponentForCell (int rowNumber, int columnId, bool /*isRowSelected*/,
-        Component* existingComponentToUpdate) override
-    {
-        if ((!isScanning || rowNumber > 0) && columnId == 2)
-        {
-            auto* connectComp = static_cast<ConnectColumnComponent*> (existingComponentToUpdate);
-
-            if (connectComp == nullptr)
-                connectComp = new ConnectColumnComponent (*this);
-
-            connectComp->setRowAndColumn (rowNumber, columnId);
-            return connectComp;
-        }
-
-        jassert (existingComponentToUpdate == nullptr);
-        return nullptr;
-    }
-
-    int getColumnAutoSizeWidth (int columnId) override
-    {
-        switch (columnId) {
-            case 1:
-                return 200;
-            case 2:
-            default:
-                return 100;
-        }
-    }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DeviceList)
 };

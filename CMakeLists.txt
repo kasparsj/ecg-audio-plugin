@@ -51,7 +51,9 @@ juce_add_plugin("${PROJECT_NAME}"
     NEEDS_MIDI_INPUT FALSE               # Does the plugin need midi input?
     NEEDS_MIDI_OUTPUT FALSE              # Does the plugin need midi output?
     IS_MIDI_EFFECT FALSE                 # Is this plugin a MIDI effect?
-    # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE    # Does the editor need keyboard focus?
+    BLUETOOTH_PERMISSION_ENABLED TRUE
+    MICROPHONE_PERMISSION_ENABLED FALSE
     COPY_PLUGIN_AFTER_BUILD TRUE # On MacOS, plugin will be copied to /Users/you/Library/Audio/Plug-Ins/
     PLUGIN_MANUFACTURER_CODE Jaud               # This has to be one uppercase, rest lower for AU formats
     PLUGIN_CODE P001                            # A unique four-character plugin id with at least one upper-case character

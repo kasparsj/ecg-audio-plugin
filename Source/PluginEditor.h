@@ -28,12 +28,7 @@ public:
     void closeConnectDialog();
     void disconnectSensor();
 
-    void setPeripheral(SimpleBLE::Peripheral &newPeripheral) override {
-        peripheral = newPeripheral;
-        status = PERIPHERAL_CONNECTED;
-        closeConnectDialog();
-        repaint();
-    }
+    void setPeripheral(SimpleBLE::Peripheral &newPeripheral) override;
 
 private:
     // This reference is provided as a quick way for your editor to
