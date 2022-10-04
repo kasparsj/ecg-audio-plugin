@@ -19,6 +19,19 @@ public:
         PERIPHERAL_CONNECTED,
     };
 
+    const std::string HR_SERVICE = "180d";
+    const std::string HR_DATA = "2a37";
+
+    const std::string PMD_SERVICE = "FB005C80-02E7-F387-1CAD-8ACD2D8DF0C8";
+    const std::string PMD_CP = "FB005C81-02E7-F387-1CAD-8ACD2D8DF0C8";
+    const std::string PMD_DATA = "FB005C82-02E7-F387-1CAD-8ACD2D8DF0C8";
+
+    const char CMD_GET_SETTINGS = '1';
+    const char CMD_START_STREAM = '2';
+    const char CMD_STOP_STREAM = '3';
+
+    const char TYPE_ECG = '0';
+
     explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
     ~AudioPluginAudioProcessorEditor() override;
 

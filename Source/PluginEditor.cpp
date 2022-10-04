@@ -141,25 +141,52 @@ void AudioPluginAudioProcessorEditor::dialogClosing() {
 
 void AudioPluginAudioProcessorEditor::setActiveIndex (int i) {
     if (i != activeIndex) {
-        if (activeIndex >= 0) {
-            peripherals[activeIndex].unsubscribe("180d", "2a37");
+        try {
+            if (activeIndex >= 0) {
+                peripherals[activeIndex].unsubscribe(HR_SERVICE, HR_DATA);
+                peripherals[activeIndex].unsubscribe(PMD_SERVICE, PMD_DATA);
+                peripherals[activeIndex].unsubscribe(PMD_SERVICE, PMD_CP);
+                peripherals[activeIndex].write_request(PMD_SERVICE, PMD_CP, std::string(1, CMD_STOP_STREAM) + TYPE_ECG);
+                // todo: stop stream
+            }
+            BLEManager::setActiveIndex (i);
+            status = activeIndex >= 0 && peripherals[activeIndex].is_connected() ? PERIPHERAL_CONNECTED : PERIPHERAL_NOT_CONNECTED;
+            if (activeIndex >= 0) {
+                peripherals[activeIndex].notify(HR_SERVICE, HR_DATA, [&](SimpleBLE::ByteArray bytes) {
+                    hr = (uint32_t)((uint8_t) bytes[1]);
+
+                    const MessageManagerLock mmLock;
+                    repaint();
+                });
+                peripherals[activeIndex].notify(PMD_SERVICE, PMD_DATA, [&](SimpleBLE::ByteArray bytes) {
+                    std::cout << "ecg " << bytes << std::endl;
+                });
+//                for (int i=0; i<peripherals[activeIndex].services().size(); i++) {
+//                    for (int j=0; j<peripherals[activeIndex].services()[i].characteristics().size(); j++) {
+//                        std::cout << peripherals[activeIndex].services()[i].uuid() << " " << peripherals[activeIndex].services()[i].characteristics()[j].uuid() << std::endl;
+//                    }
+//                }
+                peripherals[activeIndex].indicate(PMD_SERVICE, PMD_CP, [&](SimpleBLE::ByteArray bytes) {
+                    std::cout << "cp ";
+                    for (int i=0; i<bytes.length(); i++) {
+                        std::cout << std::hex <<  bytes[i] << " ";
+                    }
+                    std::cout << std::endl;
+                });
+//                std::cout << "cp read: " << peripherals[activeIndex].read(PMD_SERVICE, PMD_CP) << std::endl;
+//                peripherals[activeIndex].write_request(PMD_SERVICE, PMD_CP, std::string(1, CMD_GET_SETTINGS) + TYPE_ECG);
+                // todo: need to set MTU 512, but not possible with MacOs
+                //0x02, 0x00, 0x01, 0x01, 0x0E, 0x00, 0x00, 0x01, 0x82, 0x00
+                peripherals[activeIndex].write_request(PMD_SERVICE, PMD_CP, std::string(1, CMD_START_STREAM) + TYPE_ECG + "11140011300");
+                closeConnectDialog();
+            }
         }
-        BLEManager::setActiveIndex (i);
-        status = activeIndex >= 0 && peripherals[activeIndex].is_connected() ? PERIPHERAL_CONNECTED : PERIPHERAL_NOT_CONNECTED;
-        if (activeIndex >= 0) {
-            peripherals[activeIndex].notify("180d", "2a37", [&](SimpleBLE::ByteArray bytes) {
-                hr = (uint32_t)((uint8_t) bytes[1]);
-
-                const MessageManagerLock mmLock;
-                repaint();
-            });
-            peripherals[activeIndex].notify("180d", "2a37", [&](SimpleBLE::ByteArray bytes) {
-                hr = (uint32_t)((uint8_t) bytes[1]);
-
-                const MessageManagerLock mmLock;
-                repaint();
-            });
-            closeConnectDialog();
+        catch (std::exception& e) {
+            AlertWindow::showMessageBoxAsync (
+                AlertWindow::WarningIcon,
+                "Error connecting to sensor:",
+                e.what(),
+                "OK");
         }
     }
 }

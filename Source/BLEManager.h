@@ -23,10 +23,10 @@ public:
         if (i != activeIndex && activeIndex >= 0 && peripherals[activeIndex].is_connected()) {
             peripherals[activeIndex].disconnect();
         }
-        activeIndex = i;
-        if (activeIndex >= 0) {
-            peripherals[activeIndex].connect();
+        if (i >= 0) {
+            peripherals[i].connect();
         }
+        activeIndex = i;
     }
 
     void startScan();
