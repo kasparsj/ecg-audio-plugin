@@ -48,7 +48,8 @@ public:
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
-    AudioPluginAudioProcessor& processorRef;
+    AudioPluginAudioProcessor& processor;
+    juce::AudioProcessorParameter* hr;
 
     EditorStatus status;
     TextButton connectButton;
@@ -56,8 +57,6 @@ private:
     SafePointer<ModalWindow> dialogWindow;
     std::vector<SimpleBLE::Adapter> adapters;
     DeviceList *deviceList = 0;
-    int hr = 0;
-
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };
