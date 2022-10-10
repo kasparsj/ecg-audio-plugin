@@ -22,4 +22,4 @@ All source files are located inside the Source folder.
 1. `git clone`
 2. `git submodule update --init`
 3. `mkdir build && cd build`
-4. `cmake`
+4. `cmake ../`
