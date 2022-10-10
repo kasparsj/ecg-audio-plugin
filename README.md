@@ -19,7 +19,8 @@ All source files are located inside the Source folder.
 
 ## Building
 
-1. `git clone`
-2. `git submodule update --init`
-3. `mkdir build && cd build`
-4. `cmake ../`
+1. `git clone https://github.com/kasparsj/ecg-audio-plugin.git`
+2. `cd ecg-audio-plugin`
+3. `git submodule update --init`
+4. `mkdir build && cd build`
+5. `cmake ../`
