@@ -9,7 +9,7 @@ For Bluetooth I chose to work with [SimpleBLE](https://github.com/OpenBluetoothT
 
 ## Current state
 
-Currently the audio plugin works only with HR as a source for automation (implemented as JUCE::AudioProcessorParameter). ECG is not yet working. The reason for that was a previously unforeseen difficulty with receiving ECG data. Namely the MacOs CoreBluetooth framework does not support manually changing the MTU size for a Bluetooth connection. Althouhgh Linux and Windows do support it, at the time of writing also the SimpleBLE library does not support this feature [yet](https://github.com/OpenBluetoothToolbox/SimpleBLE/issues/83). The Polar sensors require this (to be set to 256 or a larger value), because they can stream live ECG data only using this private/specialized API (it's called PMD).
+Currently the audio plugin works only with HR as a source for automation (implemented as JUCE::AudioProcessorParameter) or as a parameter link (automation modulation source). ECG is not yet working. The reason for that was a previously unforeseen difficulty with receiving ECG data. Namely the MacOs CoreBluetooth framework does not support manually changing the MTU size for a Bluetooth connection. Althouhgh Linux and Windows do support it, at the time of writing also the SimpleBLE library does not support this feature [yet](https://github.com/OpenBluetoothToolbox/SimpleBLE/issues/83). The Polar sensors require this (to be set to 256 or a larger value), because they can stream live ECG data only using this private/specialized API (it's called PMD).
 
 [Demo Video](https://www.youtube.com/watch?v=l_BRtQtrjJE)
 
