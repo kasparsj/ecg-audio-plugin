@@ -1,6 +1,6 @@
 # HR/ECG audio plugin.
 
-This audio plugin is built on [Pamplejuce](https://github.com/sudara/pamplejuce/actions). 
+This audio plugin is based on [Pamplejuce](https://github.com/sudara/pamplejuce/actions) template. 
 Pamplejuce is a template for creating and building JUCE plugins with CMake & CLion.
 
 The initial idea was to build an audio plugin with which it would be possible to record live ECG (Electrocardiography) data into a DAW. For that I chose to work with Polar Bluetooth sensors, namely H9, H10, OH1 and Verity Sense, because these are very user friendly when compared to alternatives. Also they have an open source mobile SDK, which could be used as a source of reference.
