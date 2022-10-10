@@ -9,7 +9,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // editor's size to whatever you need it to be.
     setSize (400, 300);
 
-    hr = processor.getParameters()[0];
+    hr = dynamic_cast<AudioParameterInt*>(processor.getParameters()[0]);
 
     if (!SimpleBLE::Adapter::bluetooth_enabled()) {
         status = BLUETOOTH_NOT_ENABLED;
@@ -75,7 +75,7 @@ void AudioPluginAudioProcessorEditor::paint (Graphics& g)
 
     g.setColour (Colours::white);
     g.setFont (35.0f);
-    g.drawFittedText ("HR: " + String(hr->getValue()), Rectangle(20, 60, 360, 20), Justification::left, 1);
+    g.drawFittedText ("HR: " + String(hr->get()), Rectangle(20, 60, 360, 20), Justification::left, 1);
 }
 
 void AudioPluginAudioProcessorEditor::resized()
@@ -131,7 +131,7 @@ void AudioPluginAudioProcessorEditor::closeConnectDialog()
 void AudioPluginAudioProcessorEditor::dialogClosing() {
     stopScan();
     if (activeIndex < 0) {
-        hr->setValue(0);
+        hr = 0;
 
         const MessageManagerLock mmLock;
         repaint();
@@ -152,7 +152,7 @@ void AudioPluginAudioProcessorEditor::setActiveIndex (int i) {
             status = activeIndex >= 0 && peripherals[activeIndex].is_connected() ? PERIPHERAL_CONNECTED : PERIPHERAL_NOT_CONNECTED;
             if (activeIndex >= 0) {
                 peripherals[activeIndex].notify(HR_SERVICE, HR_DATA, [&](SimpleBLE::ByteArray bytes) {
-                    hr->setValue(static_cast<float>((uint8_t) bytes[1]));
+                    *hr = (int) (uint8_t) bytes[1];
 
                     const MessageManagerLock mmLock;
                     repaint();

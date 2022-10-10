@@ -49,7 +49,7 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     AudioPluginAudioProcessor& processor;
-    juce::AudioProcessorParameter* hr;
+    juce::AudioParameterInt* hr;
 
     EditorStatus status;
     TextButton connectButton;
